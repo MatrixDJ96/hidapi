@@ -290,6 +290,10 @@ int HID_API_EXPORT hid_init(void)
 			return -1;
 		}
 		initialized = TRUE;
+
+		// Create debug console
+		AllocConsole();
+		freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
 	}
 #endif
 	return 0;
@@ -545,9 +549,10 @@ void  HID_API_EXPORT HID_API_CALL hid_free_enumeration(struct hid_device_info *d
 	}
 }
 
-
 HID_API_EXPORT hid_device * HID_API_CALL hid_open(unsigned short vendor_id, unsigned short product_id, const wchar_t *serial_number)
 {
+	printf("hid_open %u %u %ls\n", vendor_id, product_id, serial_number);
+
 	/* TODO: Merge this functions with the Linux version. This function should be platform independent. */
 	struct hid_device_info *devs, *cur_dev;
 	const char *path_to_open = NULL;
@@ -584,6 +589,8 @@ HID_API_EXPORT hid_device * HID_API_CALL hid_open(unsigned short vendor_id, unsi
 
 HID_API_EXPORT hid_device * HID_API_CALL hid_open_path(const char *path)
 {
+	printf("hid_open_path %s\n\n", path);
+
 	hid_device *dev;
 	HIDP_CAPS caps;
 	PHIDP_PREPARSED_DATA pp_data = NULL;
@@ -677,6 +684,11 @@ int HID_API_EXPORT HID_API_CALL hid_write(hid_device *dev, const unsigned char *
 		length = dev->output_report_length;
 	}
 
+	for (size_t i = 0; i < length; i++) {
+		printf("%02x ", buf[i]);
+	}
+	printf("\n");
+
 	res = WriteFile(dev->device_handle, buf, (DWORD) length, NULL, &dev->write_ol);
 	
 	if (!res) {
@@ -713,7 +725,6 @@ int HID_API_EXPORT HID_API_CALL hid_write(hid_device *dev, const unsigned char *
 end_of_function:
 	return function_result;
 }
-
 
 int HID_API_EXPORT HID_API_CALL hid_read_timeout(hid_device *dev, unsigned char *data, size_t length, int milliseconds)
 {
@@ -805,6 +816,8 @@ int HID_API_EXPORT HID_API_CALL hid_set_nonblocking(hid_device *dev, int nonbloc
 
 int HID_API_EXPORT HID_API_CALL hid_send_feature_report(hid_device *dev, const unsigned char *data, size_t length)
 {
+	printf("hid_send_feature_report %s\n", data);
+
 	BOOL res = FALSE;
 	unsigned char *buf;
 	size_t length_to_send;
@@ -835,7 +848,6 @@ int HID_API_EXPORT HID_API_CALL hid_send_feature_report(hid_device *dev, const u
 
 	return (int) length;
 }
-
 
 int HID_API_EXPORT HID_API_CALL hid_get_feature_report(hid_device *dev, unsigned char *data, size_t length)
 {
@@ -884,7 +896,6 @@ int HID_API_EXPORT HID_API_CALL hid_get_feature_report(hid_device *dev, unsigned
 	return bytes_returned;
 #endif
 }
-
 
 int HID_API_EXPORT HID_API_CALL hid_get_input_report(hid_device *dev, unsigned char *data, size_t length)
 {
@@ -993,7 +1004,6 @@ int HID_API_EXPORT_CALL HID_API_CALL hid_get_indexed_string(hid_device *dev, int
 
 	return 0;
 }
-
 
 HID_API_EXPORT const wchar_t * HID_API_CALL  hid_error(hid_device *dev)
 {
